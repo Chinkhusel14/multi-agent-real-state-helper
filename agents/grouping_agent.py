@@ -1,4 +1,3 @@
-# agents/grouping_agent.py
 from typing import List, Dict
 import re
 
@@ -13,14 +12,12 @@ class GroupingAgent:
         }
         
         for listing in listings:
-            # Group by district
             district = self._extract_district(listing.get("place", ""))
             if district:
                 if district not in groups["by_district"]:
                     groups["by_district"][district] = []
                 groups["by_district"][district].append(listing)
             
-            # Group by price range (improved parsing)
             price_str = listing.get("price", "")
             price_range = self._get_price_range(price_str)
             if price_range:
@@ -28,14 +25,12 @@ class GroupingAgent:
                     groups["by_price_range"][price_range] = []
                 groups["by_price_range"][price_range].append(listing)
             
-            # Group by room count (improved parsing)
             room_count = self._extract_room_count(listing.get("title", "") + " " + listing.get("details", ""))
             if room_count:
                 if room_count not in groups["by_room_count"]:
                     groups["by_room_count"][room_count] = []
                 groups["by_room_count"][room_count].append(listing)
             
-            # Group by area range (improved parsing)
             area_str = listing.get("area", "")
             area_range = self._get_area_range(area_str)
             if area_range:
@@ -43,7 +38,6 @@ class GroupingAgent:
                     groups["by_area_range"][area_range] = []
                 groups["by_area_range"][area_range].append(listing)
             
-            # Group by year built (improved parsing)
             year_str = listing.get("year", "")
             year_range = self._get_year_range(year_str)
             if year_range:
@@ -63,8 +57,7 @@ class GroupingAgent:
     
     def _get_price_range(self, price_str: str) -> str:
         try:
-            # Handle different price formats like "1.2 сая" or "120,000,000"
-            if "сая" in price_str:  # If price is in "сая" (millions)
+            if "сая" in price_str:  
                 price = float(re.search(r"[\d.]+", price_str).group()) * 1_000_000
             else:
                 price = float(re.sub(r"[^\d]", "", price_str))
@@ -96,7 +89,6 @@ class GroupingAgent:
     
     def _get_area_range(self, area_str: str) -> str:
         try:
-            # Extract first number found (handles "45 м2" or "45.5 мкв")
             area = float(re.search(r"[\d.]+", area_str).group())
             if area < 40:
                 return "Under 40 sqm"
@@ -111,7 +103,6 @@ class GroupingAgent:
     
     def _get_year_range(self, year_str: str) -> str:
         try:
-            # Extract first 4-digit number
             year_match = re.search(r"\b\d{4}\b", year_str)
             if year_match:
                 year = int(year_match.group())

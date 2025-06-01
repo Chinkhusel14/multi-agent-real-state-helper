@@ -34,12 +34,11 @@ class SearchAgent:
             results = []
             if response and "results" in response:
                 for r in response["results"]:
-                    # Extract title, url, and content if available
-                    title = r.get("title", "No Title") # Default to "No Title" if not present
+                    title = r.get("title", "No Title") 
                     url = r.get("url")
                     content = r.get("content")
 
-                    if url and content: # Ensure we have at least URL and content
+                    if url and content: 
                         results.append({"title": title, "url": url, "content": content})
             
             print(f"Web search for '{query}' completed. Found {len(results)} results.")

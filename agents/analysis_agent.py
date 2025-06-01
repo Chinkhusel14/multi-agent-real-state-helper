@@ -17,11 +17,8 @@ class AnalysisAgent:
         Initializes the AnalysisAgent with a hardcoded Google Generative AI API key.
         WARNING: Hardcoding API keys is not recommended for production or public code.
         """
-        # Replace "YOUR_HARDCODED_API_KEY_HERE" with your actual Google Generative AI API Key
-        # Ensure you are using a model supported by your API key and region.
-        # gemini-2.0-flash is recommended as per instructions.
         genai.configure(api_key="AIzaSyBXVyX1sE0NBLkjbDr0VcTaSOAi_AFkg3I")
-        self.model = genai.GenerativeModel('gemini-2.0-flash') # Changed model to gemini-2.0-flash
+        self.model = genai.GenerativeModel('gemini-2.0-flash')
 
     def group_data(self, data: List[Dict]) -> Dict[str, Dict[str, List[Dict]]]:
         """
@@ -56,7 +53,6 @@ class AnalysisAgent:
 
             # Group by district
             if 'place' in listing and listing['place']:
-                # Assuming district is the first part of the 'place' string before a comma or other separator
                 district = listing['place'].split(',')[0].strip()
                 if district:
                     if district not in grouped_data["by_district"]:
@@ -88,14 +84,10 @@ class AnalysisAgent:
         if not price_str:
             return None
 
-        # Clean the price string: remove currency symbols (₮), and convert all numerical
-        # separators (commas, spaces) to nothing for standard float conversion.
-        # Handle 'сая' and 'тэрбум' multipliers first to ensure correct scaling.
         clean_price_initial = price_str.replace('₮', '').strip()
 
         if 'сая' in clean_price_initial:
             value_part = clean_price_initial.replace('сая', '').strip()
-            # Remove commas and spaces from the number part before converting to float
             cleaned_value_part = value_part.replace(',', '').replace(' ', '')
             try:
                 value = float(cleaned_value_part) * 1_000_000
@@ -103,7 +95,6 @@ class AnalysisAgent:
                 return None
         elif 'тэрбум' in clean_price_initial:
             value_part = clean_price_initial.replace('тэрбум', '').strip()
-            # Remove commas and spaces from the number part before converting to float
             cleaned_value_part = value_part.replace(',', '').replace(' ', '')
             try:
                 value = float(cleaned_value_part) * 1_000_000_000
@@ -111,7 +102,6 @@ class AnalysisAgent:
                 return None
         else:
             try:
-                # For direct number strings, remove commas and spaces before converting
                 value = float(clean_price_initial.replace(',', '').replace(' ', ''))
             except ValueError:
                 return None
@@ -145,7 +135,6 @@ class AnalysisAgent:
                 value = listing.get(feature)
                 if value:
                     if feature == 'year':
-                        # Clean year format if necessary (e.g., "2020.0" -> "2020")
                         value = str(value).split('.')[0]
                     if str(value).isdigit(): # Ensure year is numeric before counting
                         if value not in feature_counts[feature]:
@@ -199,7 +188,7 @@ class AnalysisAgent:
         """
         count = len(listings)
         prices = [self._extract_numeric_price(l.get('price')) for l in listings if l.get('price')]
-        prices = [p for p in prices if p is not None and p > 0] # Filter out None and zero prices
+        prices = [p for p in prices if p is not None and p > 0]
 
         average_price = sum(prices) / len(prices) if prices else 0
         min_price = min(prices) if prices else 0
@@ -229,7 +218,6 @@ class AnalysisAgent:
             response = self.model.generate_content(llm_prompt)
             llm_text = response.text.strip()
 
-            # Robust parsing for "Шинжилгээ:" and "Санал:"
             summary_match = re.search(r'Шинжилгээ:\s*(.*?)(?=\nСанал:|$)', llm_text, re.DOTALL)
             if summary_match:
                 summary_content = summary_match.group(1).strip()
@@ -238,14 +226,11 @@ class AnalysisAgent:
             if suggestions_section_match:
                 suggestions_text = suggestions_section_match.group(1).strip()
             
-            # Fallback if parsing fails or no suggestions are found
             if not summary_content and llm_text:
-                # Try to extract the first paragraph as summary if no explicit "Шинжилгээ:"
                 summary_content = llm_text.split('\n\n')[0].strip()
             if not suggestions_text and llm_text:
-                # If no explicit "Санал:", try to extract the last paragraph as suggestion
                 suggestions_text = llm_text.split('\n\n')[-1].strip()
-                if suggestions_text == summary_content: # Avoid duplicating if it's the only content
+                if suggestions_text == summary_content: 
                     suggestions_text = ""
 
 
@@ -258,8 +243,8 @@ class AnalysisAgent:
             "average_price": average_price,
             "price_range": (min_price, max_price),
             "common_features": common_features,
-            "summary": summary_content, # LLM-generated summary
-            "improvement_suggestions": [suggestions_text] if suggestions_text else [] # Store as list for consistency
+            "summary": summary_content, 
+            "improvement_suggestions": [suggestions_text] if suggestions_text else [] 
         }
         return analysis
 
@@ -312,7 +297,6 @@ class AnalysisAgent:
             response = self.model.generate_content(llm_prompt)
             llm_text = response.text.strip()
 
-            # Robust parsing for "Шинжилгээ:" and "Санал:"
             summary_match = re.search(r'Шинжилгээ:\s*(.*?)(?=\nСанал:|$)', llm_text, re.DOTALL)
             if summary_match:
                 summary_content = summary_match.group(1).strip()
@@ -321,7 +305,6 @@ class AnalysisAgent:
             if suggestions_section_match:
                 suggestions_text = suggestions_section_match.group(1).strip()
             
-            # Fallback if parsing fails or no suggestions are found
             if not summary_content and llm_text:
                 summary_content = llm_text.split('\n\n')[0].strip()
             if not suggestions_text and llm_text:
@@ -333,13 +316,13 @@ class AnalysisAgent:
             print(f"Error generating analysis/suggestions for '{category_name}' overall with LLM: {e}")
 
         analysis = {
-            "group_name": category_name.replace('_', ' ').title(), # Use the cleaned category name for the report
+            "group_name": category_name.replace('_', ' ').title(), 
             "count": count,
             "average_price": average_price,
             "price_range": (min_price, max_price),
             "common_features": common_features,
             "summary": summary_content,
-            "improvement_suggestions": [suggestions_text] if suggestions_text else [] # Store as list for consistency
+            "improvement_suggestions": [suggestions_text] if suggestions_text else []
         }
         return analysis
 

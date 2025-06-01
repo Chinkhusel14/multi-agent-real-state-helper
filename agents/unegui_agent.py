@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import time
-from typing import List, Dict, Optional # Added Optional for clarity on None returns
+from typing import List, Dict, Optional 
 
 class UneguiAgent:
     """
@@ -16,7 +16,7 @@ class UneguiAgent:
         Initializes the UneguiAgent. Currently, no specific attributes are needed
         beyond the BASE_URL, but this provides a consistent class structure.
         """
-        pass # No specific initialization logic needed for this agent yet
+        pass 
 
     def crawl_listings(self, pages: int = 1) -> List[Dict]:
         """
@@ -37,28 +37,24 @@ class UneguiAgent:
         for i in range(1, pages + 1):
             # Construct the URL for the current listing page
             url = f'{self.BASE_URL}l-hdlh/l-hdlh-zarna/oron-suuts-zarna/?page={i}'
-            print(f"Crawling page: {url}") # Print current page being crawled
+            print(f"Crawling page: {url}") 
 
             try:
-                # Send an HTTP GET request to the URL
-                response = requests.get(url, timeout=10) # Added timeout for robustness
-                response.raise_for_status() # Raise an HTTPError for bad responses (4xx or 5xx)
+                response = requests.get(url, timeout=10) 
+                response.raise_for_status() 
             except requests.exceptions.RequestException as e:
                 print(f"Error fetching page {url}: {e}")
-                continue # Skip to the next page if there's an error
+                continue 
 
             # Parse the HTML content of the page using BeautifulSoup
             soup = BeautifulSoup(response.text, 'html.parser')
-            # Find all individual advertisement containers on the page
             ads = soup.find_all('div', class_='advert js-item-listing')
 
             if not ads:
                 print(f"No listings found on page {i}. Ending crawl.")
-                break # Stop if no ads are found, might indicate end of listings
+                break 
 
-            # Iterate through each found advertisement
             for ad in ads:
-                # Initialize a dictionary to store data for the current advertisement
                 ad_data: Dict = {
                     'title': None,
                     'price': None,
@@ -74,7 +70,6 @@ class UneguiAgent:
                     'url': None
                 }
 
-                # Extract basic information from the main listing card
                 title_tag = ad.find('a', class_='advert__content-title')
                 ad_data['title'] = title_tag.get_text(strip=True) if title_tag else None
 
@@ -85,17 +80,15 @@ class UneguiAgent:
                 ad_data['place'] = place_tag.get_text(strip=True) if place_tag else None
 
                 price_tag = ad.find('a', class_='advert__content-price _not-title')
-                # Extract the href attribute for the detailed listing URL
                 href = price_tag['href'] if price_tag and 'href' in price_tag.attrs else None
                 ad_data['price'] = price_tag.get_text(strip=True) if price_tag else None
-                # Construct the full URL for the detailed listing
                 additional_url = self.BASE_URL + href if href else None
                 ad_data['url'] = additional_url
 
                 # If a detailed URL is found, crawl the individual listing page for more details
                 if additional_url:
                     try:
-                        print(f"  Fetching details from: {additional_url}") # Indicate detail fetching
+                        print(f"  Fetching details from: {additional_url}") 
                         detail_response = requests.get(additional_url, timeout=10)
                         detail_response.raise_for_status()
                         soup2 = BeautifulSoup(detail_response.text, 'html.parser')
@@ -114,7 +107,6 @@ class UneguiAgent:
                                 key_text = k.get_text(strip=True).lower()
                                 val_text = v.get_text(strip=True)
                                 
-                                # Map extracted keys to the ad_data dictionary fields
                                 if 'талбай:' in key_text:
                                     ad_data['area'] = val_text
                                 elif 'тагт:' in key_text:
@@ -132,8 +124,7 @@ class UneguiAgent:
                     except Exception as e:
                         print(f"Error parsing details from {additional_url}: {e}")
                 
-                all_listings_data.append(ad_data) # Add the completed listing data to the list
-
-            time.sleep(1) # Pause for 1 second between page requests to be polite to the server
+                all_listings_data.append(ad_data) 
+            time.sleep(1) 
 
         return all_listings_data

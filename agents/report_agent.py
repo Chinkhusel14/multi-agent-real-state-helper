@@ -16,9 +16,7 @@ class ReportAgent:
         It expects 'NotoSans-Regular.ttf', 'NotoSans-Bold.ttf', and 'NotoSans-Italic.ttf'
         to be present in a 'font' directory relative to the agent's script location.
         """
-        # Determine the directory where this script is located
         script_dir = os.path.dirname(__file__)
-        # Construct the path to the 'font' directory
         self.font_dir = os.path.join(script_dir, "font")
 
         # Define full paths for the required NotoSans font files
@@ -27,7 +25,6 @@ class ReportAgent:
         self.italic_font = os.path.join(self.font_dir, "NotoSans-Italic.ttf")
         
         # Verify that all required font files exist.
-        # This is crucial for FPDF to render text correctly, especially for Unicode characters.
         if not all(os.path.exists(f) for f in [self.regular_font, self.bold_font, self.italic_font]):
             raise FileNotFoundError(
                 f"Required font files not found in font directory: {self.font_dir}. "
@@ -46,9 +43,7 @@ class ReportAgent:
             str: The cleaned and normalized text string.
         """
         if not isinstance(text, str):
-            text = str(text) # Convert non-string inputs to string
-        # Normalize Unicode characters to their canonical composed form (NFKC)
-        # This helps in consistent rendering and avoids issues with combining characters.
+            text = str(text) 
         text = unicodedata.normalize('NFKC', text)
         return text
 

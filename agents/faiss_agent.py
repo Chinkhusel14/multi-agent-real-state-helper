@@ -36,7 +36,7 @@ class FAISSAgent:
             index_path (str): The local path where the FAISS index will be saved.
         """
         texts = []
-        metadatas = [] # List to store metadata for each text
+        metadatas = [] 
         for item in listings:
             # Concatenate relevant listing information into a single text string for embedding.
             title = str(item.get('title', ''))
@@ -46,11 +46,10 @@ class FAISSAgent:
             details = str(item.get('details', ''))
             text = f"{title} | {place} | {price} | {area} | {details}"
             texts.append(text)
-            metadatas.append(item) # Store the entire original item dictionary as metadata
+            metadatas.append(item) 
 
         # Create a FAISS vector store from the texts, their embeddings, and the associated metadata.
         vectorstore = FAISS.from_texts(texts, self._embedding_model, metadatas=metadatas)
-        # Save the created FAISS index locally.
         vectorstore.save_local(index_path)
         print(f"FAISS index built and saved to {index_path}")
 
@@ -74,7 +73,6 @@ class FAISSAgent:
                 self._embedding_model,
                 allow_dangerous_deserialization=True
             )
-            # Perform a similarity search using the query.
             results = vectorstore.similarity_search(query)
             print(f"Search for '{query}' completed. Found {len(results)} results.")
             return results
